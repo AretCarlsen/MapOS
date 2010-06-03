@@ -1,3 +1,17 @@
+// Copyright (C) 2010, Aret N Carlsen (aretcarlsen@autonomoustools.com).
+// MapOS: Micro Addressing Protocol Operating System.
+// Licensed under GPLv3 and later versions. See license.txt or <http://www.gnu.org/licenses/>.
+
+
+// State control server, to save and load nonvolatile MapOS system state.
+
+
+#pragma once
+
+#ifndef DEBUGprint_HEARTBEAT
+#define DEBUGprint_HEARTBEAT(...)
+#endif
+
 class StateControlServer : public SimpleServer, public Process { public:
   virtual void saveState() = 0;
   virtual void loadState() = 0;

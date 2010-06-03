@@ -1,3 +1,10 @@
+// Copyright (C) 2010, Aret N Carlsen (aretcarlsen@autonomoustools.com).
+// MapOS: Micro Addressing Protocol Operating System.
+// Licensed under GPLv3 and later versions. See license.txt or <http://www.gnu.org/licenses/>.
+
+
+// Generic time functions.
+
 #pragma once
 
 inline void sleep_us(SystemTime_t delay){

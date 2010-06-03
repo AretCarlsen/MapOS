@@ -1,21 +1,32 @@
+// Copyright (C) 2010, Aret N Carlsen (aretcarlsen@autonomoustools.com).
+// MapOS: Micro Addressing Protocol Operating System.
+// Licensed under GPLv3 and later versions. See license.txt or <http://www.gnu.org/licenses/>.
+
+
+// Common includes and variables for MapOS projects.
+
 
 // DataSink/Source; Ringbuffer
-#include "../DataTransfer/DataTransfer.hpp"
-#include "../DataStore/RingBuffer.hpp"
+#include <ATcommon/DataTransfer/DataTransfer.hpp>
+#include <ATcommon/DataStore/RingBuffer.hpp>
 // MEP Encoder / Decoder
-#include "../Packet/MEP/MEPEncoder.hpp"
-#include "../Packet/MEP/MEPDecoder.hpp"
+#include <Upacket/MEP/MEPEncoder.hpp>
+#include <Upacket/MEP/MEPDecoder.hpp>
 // AddressGraph
-#include "../Packet/Routing/AddressGraph.hpp"
-#include "../Packet/Routing/EepromAddressGraph.hpp"
+#include <Upacket/Routing/AddressGraph.hpp>
+#include <Upacket/Routing/EepromAddressGraph.hpp>
 // SimpleServerProcess, EchoServer
-#include "../Packet/Servers/SimpleServer.hpp"
-#include "../Packet/Servers/EchoServer.hpp"
+#include <Upacket/Servers/SimpleServer.hpp>
+#include <Upacket/Servers/EchoServer.hpp>
 // Process (thread)
-#include "../TimedScheduler/TimedScheduler.hpp"
+#include <MapOS/TimedScheduler/TimedScheduler.hpp>
 
 // Addresses
 #include "addresses.hpp"
+
+#ifndef DEBUGprint_RARE
+#define DEBUGprint_RARE(...)
+#endif
 
 
 /* MEMORY POOLS */

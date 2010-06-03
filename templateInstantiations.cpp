@@ -1,6 +1,12 @@
+// Copyright (C) 2010, Aret N Carlsen (aretcarlsen@autonomoustools.com).
+// MapOS: Micro Addressing Protocol Operating System.
+// Licensed under GPLv3 and later versions. See license.txt or <http://www.gnu.org/licenses/>.
 
-#include "../DataStore/Buffer.hpp"
-#include "../Packet/Routing/AddressGraph.hpp"
+// MapOS required template definitions.
+
+
+#include <ATcommon/DataStore/Buffer.hpp>
+#include <Upacket/Routing/AddressGraph.hpp>
 
 // Packet buffers
 template class DataStore::DynamicArrayBuffer<uint8_t,uint16_t>;
