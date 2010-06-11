@@ -13,8 +13,12 @@
 #endif
 
 class StateControlServer : public SimpleServer, public Process { public:
-  virtual void saveState() = 0;
-  virtual void loadState() = 0;
+  virtual void saveState(){
+    kernelRouter_eepromStore.saveState();
+  }
+  virtual void loadState(){
+    kernelRouter_eepromStore.loadState();
+  }
 
   Status::Status_t process(){
     DEBUGprint_HEARTBEAT(".\n");
