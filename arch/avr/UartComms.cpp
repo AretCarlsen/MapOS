@@ -3,7 +3,7 @@
 
 // Outgoing chain: checksum generator to MEP encoder.
 MAP::OffsetMAPPacket raw_outgoing_packet_buffer[UART_OUTGOING_PACKET_BUFFER_CAPACITY];
-MAP::MAPPacketBuffer process_outgoingPacketBuffer(&process_uartIO, raw_outgoing_packet_buffer, UART_OUTGOING_PACKET_BUFFER_CAPACITY);
+MAP::MAPPacketBuffer process_outgoingPacketBuffer(&(process_uartIO.packetSink), raw_outgoing_packet_buffer, UART_OUTGOING_PACKET_BUFFER_CAPACITY);
 // Static for access by inline classes
 static MAP::PacketChecksumGenerator outgoingSink(&process_outgoingPacketBuffer);
 

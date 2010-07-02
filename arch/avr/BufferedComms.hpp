@@ -16,14 +16,16 @@ protected:
   uint8_t raw_outputBuffer[OutputBufferCapacity];
   // Data, Capacity
   DataStore::RingBuffer<uint8_t,uint8_t> outputBuffer;
-  MEP::MEPEncoder outgoingEncoder;
 
 public:
+  // MEPEncoder is public for packetSink calls
+  MEP::MEPEncoder packetSink;
+
   BufferedComms(MAP::MAPPacketSink *new_packetSink, MemoryPool *new_memoryPool)
   : inputBuffer(raw_inputBuffer, InputBufferCapacity),
     incomingDecoder(new_packetSink, new_memoryPool),
     outputBuffer(raw_outputBuffer, OutputBufferCapacity),
-    process_outgoingEncoder(&outputBuffer)
+    packetSink(&outputBuffer)
   { }
 
   // Sink data into the input buffer.
@@ -52,7 +54,7 @@ public:
     // incomingDecoder.process(); 
 
   // Run encoder on available packet data.
-    outgoingEncoder.process(); 
+    packetSink.process(); 
 
     return Status::Status__Good;
   }
