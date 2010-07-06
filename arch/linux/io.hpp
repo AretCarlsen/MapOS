@@ -1,11 +1,47 @@
+#include "../../BufferedComms.hpp"
 #include <ATcommon/DataTransfer/arch/linux/File.hpp>
 
 /* INPUT BUFFER/THREAD */
 
-uint8_t raw_uart_inputBuffer[INPUT_BUFFER_CAPACITY];
-DataStore::RingBuffer<uint8_t,uint8_t> uart_inputBuffer(raw_uart_inputBuffer, INPUT_BUFFER_CAPACITY);
+pthread_mutex_t outgoingTrigger_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t  outgoingTrigger_condition = PTHREAD_COND_INITIALIZER;
+
+template <int InputBufferCapacity, int OutputBufferCapacity>
+class Process_FileComms : public BufferedComms<InputBufferCapacity,OutputBufferCapacity> {
+private:
+
+public:
+  Process_FileComms(MAP::MAPPacketSink *new_packetSink, MemoryPool *new_memoryPool)
+  : BufferedComms<InputBufferCapacity,OutputBufferCapacity>(new_packetSink, new_memoryPool)
+  { }
+
+// Trigger outgoing sends, if not already in progress.
+  void triggerOutgoing(){
+// If the buffer is not currently empty, send a signal.
+// Note that race conditions are not a problem here,
+// as the output thread verifies that the buffer is not empty.
+    if(! BufferedComms<InputBufferCapacity,OutputBufferCapacity>::outputBuffer.is_empty()){
+      pthread_mutex_lock( &outgoingTrigger_mutex );
+      pthread_cond_signal( &outgoingTrigger_condition );
+      pthread_mutex_unlock( &outgoingTrigger_mutex );
+    }
+  }
+
+  inline Status::Status_t process(){
+  // MEP encoding/decoding
+    BufferedComms<InputBufferCapacity,OutputBufferCapacity>::process_MEP();
+  // Trigger outgoing UART bus, if necessary.
+    triggerOutgoing();
+    return Status::Status__Good;
+  }
+};
+
+template class BufferedComms<INPUT_BUFFER_CAPACITY, OUTPUT_BUFFER_CAPACITY>;
+template class Process_FileComms<INPUT_BUFFER_CAPACITY, OUTPUT_BUFFER_CAPACITY>;
+Process_FileComms<INPUT_BUFFER_CAPACITY, OUTPUT_BUFFER_CAPACITY> fileComms(&incoming_checksumValidator, &packet_memoryPool);
 
 // Incoming data thread
+  // Never returns!
 class Process_Incoming : public Process { Status::Status_t process(){
   DEBUGprint_RARE("Process_Incoming: Waiting for data on stdin...\n");
 
@@ -15,7 +51,7 @@ class Process_Incoming : public Process { Status::Status_t process(){
   // Note that ringbuffer may overflow, causing silent data loss.
       uint8_t ch = getc(stdin);
 //      DEBUGprint("Sd X%x", ch); 
-      uart_inputBuffer.sinkData(ch);
+      fileComms.sinkData(ch);
     }
 
     usleep(30000);
@@ -24,15 +60,6 @@ class Process_Incoming : public Process { Status::Status_t process(){
 // Should never reach this point.
   return Status::Status__Good;
 } } process_incoming;
-
-
-/* OUTPUT BUFFER/THREAD */
-
-uint8_t raw_uart_outputBuffer[OUTPUT_BUFFER_CAPACITY];
-DataStore::RingBuffer<uint8_t,uint8_t> uart_outputBuffer(raw_uart_outputBuffer, OUTPUT_BUFFER_CAPACITY);
-
-pthread_mutex_t outgoingTrigger_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t  outgoingTrigger_condition  = PTHREAD_COND_INITIALIZER;
 
 // Outgoing data thread
 class Process_Outgoing : public Process { Status::Status_t process(){
@@ -46,7 +73,7 @@ class Process_Outgoing : public Process { Status::Status_t process(){
 
 // Send all pending outgoing data
     uint8_t data;
-    while(uart_outputBuffer.sourceData(&data) == Status::Status__Good){
+    while(fileComms.sourceData(data) == Status::Status__Good){
 // Block, waiting for output on stdout.
       putc(data, stdout);
     }
@@ -58,23 +85,7 @@ class Process_Outgoing : public Process { Status::Status_t process(){
 
 } } process_outgoing;
 
-// Trigger outgoing sends, if not already in progress.
-void triggerOutgoing(){
-// If the buffer is not currently empty, send a signal.
-// Note that race conditions are not a problem here,
-// as the output thread verifies that the buffer is not empty.
-  if(! uart_outputBuffer.is_empty()){
-    pthread_mutex_lock( &outgoingTrigger_mutex );
-    pthread_cond_signal( &outgoingTrigger_condition );
-    pthread_mutex_unlock( &outgoingTrigger_mutex );
-  }
-}
-
-// Named to eliminate compiler warnings
-class Process_TriggerOutgoing : public Process { Status::Status_t process(){
-  triggerOutgoing(); return Status::Status__Good;
-} } process_triggerOutgoing;
-
+/*
 class FileComms{
   FILE* device;
 
@@ -98,4 +109,5 @@ public:
     return true;
   }
 };
+*/
 

@@ -17,3 +17,7 @@ void verify_eeprom(){
   }
 }
 
+void startup_diagnostics(){
+  verify_eeprom();
+}
+

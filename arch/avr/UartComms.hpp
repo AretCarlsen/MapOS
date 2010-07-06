@@ -21,7 +21,7 @@ public:
     // enable RxD/TxD and interrupts
     UCSR0B = BV(RXCIE0)|BV(TXCIE0)|BV(RXEN0)|BV(TXEN0);
     // set default baud rate
-    uartSetBaudRate(UART_INITIAL_BAUD_RATE);
+    setBaudRate(UART_INITIAL_BAUD_RATE);
     // enable interrupts
     sei();
     // DEBUG: First byte
@@ -39,7 +39,7 @@ public:
 
   inline void triggerOutgoing(){
     uint8_t data;
-    if(readyTx && (outputBuffer.sourceData(&data) == Status::Status__Good)){
+    if(readyTx && (BufferedComms<InputBufferCapacity,OutputBufferCapacity>::outputBuffer.sourceData(data) == Status::Status__Good)){
       outb(UDR0, data);
       readyTx = false;
     }
@@ -47,31 +47,31 @@ public:
 
   inline Status::Status_t process(){
   // MEP encoding/decoding
-    process_MEP();
+    BufferedComms<InputBufferCapacity,OutputBufferCapacity>::process_MEP();
   // Trigger outgoing UART bus, if necessary.
     triggerOutgoing(); 
     return Status::Status__Good;
   }
-}
+};
 
-Process_UartComms<UART_INPUT_BUFFER_CAPACITY, UART_OUTPUT_BUFFER_CAPACITY> uartComms(incoming_checksumValidator, packet_memoryPool);
+template class BufferedComms<UART_INPUT_BUFFER_CAPACITY, UART_OUTPUT_BUFFER_CAPACITY>;
+template class Process_UartComms<UART_INPUT_BUFFER_CAPACITY, UART_OUTPUT_BUFFER_CAPACITY>;
+Process_UartComms<UART_INPUT_BUFFER_CAPACITY, UART_OUTPUT_BUFFER_CAPACITY> uartComms(&incoming_checksumValidator, &packet_memoryPool);
 
 ISR(USART_TX_vect){
 // DEBUG: Ongoing bytes
 //  outb(UDR0, 'z'); return;
 
   uint8_t data;
-  if(uartComms.sourceData(&data) == Status::Status__Good)
+  if(uartComms.sourceData(data) == Status::Status__Good)
     outb(UDR0, data);
   else
     uartComms.readyTx = true;
 }
 
-/*
 void uartSendByte(const uint8_t byte){
   uartComms.sinkData(byte);
 }
-*/
 
 ISR(USART_RX_vect){
   uartComms.sinkData(UDR0);
